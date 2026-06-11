@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareerPilot AI – Personalized Career Mentor</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Microsoft MSAL.js for Graph API OAuth (served locally to bypass SSL/network blocks) -->
+    <script src="/msal-browser.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- ── SIDEBAR ────────────────────────────────────────────────────── -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <img src="/assets/logo.png" alt="CareerPilot Logo" class="app-logo" onerror="this.style.display='none'">
+                <div class="brand-info">
+                    <span class="brand-title">CareerPilot AI</span>
+                    <span class="brand-subtitle">Powered by FAANG AI Coach</span>
+                </div>
+            </div>
+            
+            <hr class="divider">
+            
+            <!-- Controls Form -->
+            <form id="analyze-form" onsubmit="event.preventDefault();">
+                <div class="form-group">
+                    <label class="form-label"><i class="fa-solid fa-key icon-accent"></i> Gemini API Key</label>
+                    <input type="password" id="api-key-input" class="form-input" placeholder="AQ.Ab8RN..." title="Leave blank to use .env key">
+                    <small class="form-hint">Leave blank to use .env key</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label"><i class="fa-solid fa-file-arrow-up icon-accent"></i> Resume Upload</label>
+                    <div id="dropzone" class="dropzone">
+                        <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
+                        <span class="dropzone-text">Drag & drop or click to upload</span>
+                        <span id="file-name-display" class="file-name-display">No file selected</span>
+                        <input type="file" id="file-input" accept=".pdf,.docx" style="display: none;">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label"><i class="fa-solid fa-bullseye icon-accent"></i> Target Role</label>
+                    <select id="role-select" class="form-input">
+                        <option value="Software Engineer">Software Engineer</option>
+                        <option value="AI Engineer">AI Engineer</option>
+                        <option value="Data Analyst">Data Analyst</option>
+                        <option value="Data Scientist">Data Scientist</option>
+                        <option value="Cybersecurity Analyst">Cybersecurity Analyst</option>
+                        <option value="Product Manager">Product Manager</option>
+                        <option value="Custom Role...">Custom Role...</option>
+                    </select>
+                </div>
+                
+                <div id="custom-role-group" class="form-group" style="display: none;">
+                    <label class="form-label"><i class="fa-solid fa-pencil icon-accent"></i> Enter Custom Role</label>
+                    <input type="text" id="custom-role-input" class="form-input" placeholder="e.g. Cloud Architect">
+                </div>
+                
+                <button type="button" id="analyze-btn" class="btn btn-primary btn-block">
+                    <i class="fa-solid fa-rocket"></i> Analyze My Career
+                </button>
+            </form>
+            
+            <div class="privacy-box">
+                <i class="fa-solid fa-lock"></i>
+                <div>
+                    <strong>Privacy First</strong>
+                    <p>Your CV text is processed in-memory and never stored.</p>
+                </div>
+            </div>
+            
+            <!-- Theme Toggle in Sidebar Bottom -->
+            <div class="theme-switch-wrapper">
+                <span>Theme</span>
+                <button id="theme-toggle" class="theme-toggle-btn">
+                    <i class="fa-solid fa-moon"></i> Dark Mode
+                </button>
+            </div>
+        </aside>
+        
+        <!-- ── MAIN CONTENT ────────────────────────────────────────────────── -->
+        <main class="main-content">
+            <!-- Hero Banner -->
+            <header class="hero-wrap">
+                <div class="hero-badge">✦ AI-Powered Career Mentor</div>
+                <h1 class="hero-title">Your path to <span>dream careers</span> starts here.</h1>
+                <p class="hero-sub">
+                    Upload your CV, pick a target role, and get a FAANG-grade career analysis with a
+                    personalised 90-day roadmap — in seconds.
+                </p>
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <span class="hero-stat-num">7</span>
+                        <span class="hero-stat-label">Dashboard Tabs</span>
+                    </div>
+                    <div class="hero-stat">
+                        <span class="hero-stat-num">Dynamic</span>
+                        <span class="hero-stat-label">Career Roles</span>
+                    </div>
+                    <div class="hero-stat">
+                        <span class="hero-stat-num">90</span>
+                        <span class="hero-stat-label">Day Roadmap</span>
+                    </div>
+                    <div class="hero-stat">
+                        <span class="hero-stat-num">PDF</span>
+                        <span class="hero-stat-label">Export Ready</span>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Welcome placeholder before analysis -->
+            <section id="welcome-placeholder" class="welcome-placeholder card">
+                <i class="fa-solid fa-arrow-left arrow-bounce"></i>
+                <div class="welcome-text-group">
+                    <h2>Ready to kickstart your journey?</h2>
+                    <p>Upload your PDF/DOCX resume and select a target career path in the sidebar to generate your personal FAANG-grade coaching dashboard.</p>
+                </div>
+            </section>
+            
+            <!-- Loading Indicator -->
+            <div id="loading-spinner" class="loading-spinner" style="display: none;">
+                <div class="spinner"></div>
+                <p>Analyzing your resume... Please wait.</p>
+            </div>
+            
+            <!-- ── DASHBOARD RESULTS (Hidden until analyzed) ───────────────────── -->
+            <section id="dashboard-results" style="display: none;">
+                <!-- Top Metric Strip -->
+                <div class="metrics-grid">
+                    <!-- Score Ring Card -->
+                    <div class="score-card card">
+                        <div class="score-ring">
+                            <svg viewBox="0 0 150 150" width="130" height="130">
+                                <circle class="bg-circle" cx="75" cy="75" r="62"></circle>
+                                <circle id="score-fg" class="fg-circle" cx="75" cy="75" r="62" stroke-dasharray="390 390" stroke-dashoffset="390"></circle>
+                            </svg>
+                            <div class="score-center">
+                                <div id="score-num" class="score-num">0</div>
+                                <div class="score-pct">/ 100</div>
+                            </div>
+                        </div>
+                        <div class="score-label">Career Readiness</div>
+                        <div id="score-badge" class="score-badge"></div>
+                    </div>
+                    
+                    <!-- Evaluated Role Card -->
+                    <div class="role-card card">
+                        <span class="card-meta">EVALUATING FOR</span>
+                        <h2 id="result-role-title" class="role-title">Software Engineer</h2>
+                        <p class="role-coached"><i class="fa-solid fa-user-tie"></i> Coached by a Senior FAANG Career Coach persona</p>
+                        
+                        <div class="role-stats-pills">
+                            <span class="pill pill-green" id="pill-strengths">0 Strengths</span>
+                            <span class="pill pill-red" id="pill-gaps">0 Skill Gaps</span>
+                            <span class="pill pill-blue" id="pill-projects">0 Projects</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Export PDF Card -->
+                    <div class="export-card card">
+                        <span class="card-meta">EXPORT REPORT</span>
+                        <p class="export-desc">Download your fully personalised multi-page PDF career report with roadmap, projects & certs.</p>
+                        <button id="download-pdf-btn" class="btn btn-secondary btn-block">
+                            <i class="fa-solid fa-file-pdf"></i> Download PDF Report
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Tab Row Navigation -->
+                <div class="tab-bar">
+                    <button class="tab-btn active" data-tab="tab-overview"><i class="fa-solid fa-chart-pie"></i> Overview</button>
+                    <button class="tab-btn" data-tab="tab-gaps"><i class="fa-solid fa-magnifying-glass"></i> Skill Gaps</button>
+                    <button class="tab-btn" data-tab="tab-roadmap"><i class="fa-solid fa-calendar-days"></i> Roadmap</button>
+                    <button class="tab-btn" data-tab="tab-projects"><i class="fa-solid fa-laptop-code"></i> Projects</button>
+                    <button class="tab-btn" data-tab="tab-certs"><i class="fa-solid fa-graduation-cap"></i> Certifications</button>
+                    <button class="tab-btn" data-tab="tab-interview"><i class="fa-solid fa-comments"></i> Interview Prep</button>
+                    <button class="tab-btn" data-tab="tab-matcher"><i class="fa-solid fa-crosshairs"></i> Job Matcher</button>
+                </div>
+                
+                <!-- ── TAB CONTENTS ────────────────────────────────────────────── -->
+                
+                <!-- TAB 1: Overview -->
+                <div id="tab-overview" class="tab-pane active">
+                    <div class="overview-grid">
+                        <div class="card">
+                            <h3 class="card-header-title"><i class="fa-solid fa-address-card"></i> Profile Summary</h3>
+                            <p id="summary-text" class="summary-paragraph">Summary loading...</p>
+                        </div>
+                        
+                        <div class="card">
+                            <h3 class="card-header-title"><i class="fa-solid fa-scale-balanced"></i> Strengths vs Gaps</h3>
+                            <div class="sw-split">
+                                <div class="strengths-col">
+                                    <h4 class="sw-label label-green">🟢 What you bring</h4>
+                                    <div id="strengths-list"></div>
+                                </div>
+                                <div class="gaps-col">
+                                    <h4 class="sw-label label-red">🔴 What needs work</h4>
+                                    <div id="weaknesses-list"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- TAB 2: Skill Gaps -->
+                <div id="tab-gaps" class="tab-pane">
+                    <div class="card">
+                        <h3 class="card-header-title"><i class="fa-solid fa-magnifying-glass"></i> Missing Competencies</h3>
+                        <p class="tab-instruction">These technologies and skills were not detected in your CV but are standard requirements for this target role.</p>
+                        <div id="gaps-chips" class="chips-container"></div>
+                        
+                        <div class="divider-light"></div>
+                        
+                        <h4 class="sub-section-title">Detailed Breakdown</h4>
+                        <div id="gaps-list" class="gaps-detail-list"></div>
+                    </div>
+                </div>
+                
+                <!-- TAB 3: Roadmap -->
+                <div id="tab-roadmap" class="tab-pane">
+
+                    <!-- Microsoft Calendar Sync Banner -->
+                    <div class="cal-sync-banner card">
+                        <div class="cal-sync-left">
+                            <div class="cal-sync-icon">
+                                <i class="fa-brands fa-microsoft"></i>
+                            </div>
+                            <div class="cal-sync-info">
+                                <h3 class="cal-sync-title">Sync Roadmap to Microsoft Calendar</h3>
+                                <p class="cal-sync-desc">Connect with your Microsoft account (Work IQ) to automatically create dated calendar events for every roadmap task — one per week, starting today.</p>
+                            </div>
+                        </div>
+                        <div class="cal-sync-right">
+                            <div id="cal-ms-status" class="cal-ms-status"></div>
+                            <button id="cal-connect-btn" class="btn btn-ms">
+                                <i class="fa-brands fa-microsoft"></i> Connect Microsoft Account
+                            </button>
+                            <button id="cal-sync-btn" class="btn btn-primary" style="display:none;">
+                                <i class="fa-solid fa-calendar-plus"></i> Create Calendar Events
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Calendar Preview (shown after sync) -->
+                    <div id="cal-preview" class="cal-preview" style="display:none;">
+                        <div class="card">
+                            <h3 class="card-header-title"><i class="fa-solid fa-calendar-check"></i> Calendar Events Preview</h3>
+                            <p class="tab-instruction">The following events will be (or have been) created in your Microsoft Outlook Calendar. Each task is scheduled at weekly intervals from today.</p>
+                            <div id="cal-events-list" class="cal-events-list"></div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-container">
+                        <!-- 30 Days Card -->
+                        <div class="timeline-node" style="--node-color: #4f46e5;">
+                            <div class="timeline-badge">1</div>
+                            <div class="timeline-card card">
+                                <span class="timeline-label">DAYS 1–30</span>
+                                <h3 class="timeline-heading">Foundation & Learning</h3>
+                                <p class="timeline-desc">Acquire core knowledge, close conceptual gaps, and complete targeted training.</p>
+                                <div id="roadmap-30-list" class="roadmap-items-list"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- 60 Days Card -->
+                        <div class="timeline-node" style="--node-color: #0891b2;">
+                            <div class="timeline-badge">2</div>
+                            <div class="timeline-card card">
+                                <span class="timeline-label">DAYS 31–60</span>
+                                <h3 class="timeline-heading">Build & Apply</h3>
+                                <p class="timeline-desc">Translate learning into working projects. Build demonstrable portfolio pieces.</p>
+                                <div id="roadmap-60-list" class="roadmap-items-list"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- 90 Days Card -->
+                        <div class="timeline-node" style="--node-color: #7c3aed;">
+                            <div class="timeline-badge">3</div>
+                            <div class="timeline-card card">
+                                <span class="timeline-label">DAYS 61–90</span>
+                                <h3 class="timeline-heading">Portfolio, Network & Apply</h3>
+                                <p class="timeline-desc">Polish your portfolio, optimise your resume, start applying & practicing interviews.</p>
+                                <div id="roadmap-90-list" class="roadmap-items-list"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- TAB 4: Projects -->
+                <div id="tab-projects" class="tab-pane">
+                    <div id="projects-grid" class="projects-grid"></div>
+                </div>
+                
+                <!-- TAB 5: Certifications -->
+                <div id="tab-certs" class="tab-pane">
+                    <div id="certs-grid" class="certs-grid"></div>
+                </div>
+                
+                <!-- TAB 6: Interview Prep -->
+                <div id="tab-interview" class="tab-pane">
+                    <div id="interview-list" class="accordion-container"></div>
+                </div>
+                
+                <!-- TAB 7: Job Matcher -->
+                <div id="tab-matcher" class="tab-pane">
+                    <div class="matcher-grid">
+                        <!-- Paste Job Description -->
+                        <div class="card">
+                            <h3 class="card-header-title"><i class="fa-solid fa-briefcase"></i> Job Description</h3>
+                            <p class="tab-instruction">Paste the job description of the role you want to apply for to compute compatibility and receive resume tailoring tips.</p>
+                            <textarea id="job-desc-textarea" class="matcher-textarea" placeholder="Paste the job description or requirements here..."></textarea>
+                            
+                            <button id="calculate-match-btn" class="btn btn-primary mt-4">
+                                <i class="fa-solid fa-circle-nodes"></i> Calculate Compatibility Score
+                            </button>
+                        </div>
+                        
+                        <!-- Job Match Score & Output -->
+                        <div id="matcher-results" class="card" style="display: none;">
+                            <h3 class="card-header-title"><i class="fa-solid fa-chart-simple"></i> Alignment Score</h3>
+                            
+                            <!-- Match Score ring/banner -->
+                            <div class="match-score-display">
+                                <div id="match-percent-box" class="match-percent-box">75%</div>
+                                <div class="match-meta-group">
+                                    <span id="match-status-pill" class="match-status-pill">High Compatibility</span>
+                                    <p id="match-summary-text" class="match-summary-text">Summary of match loading...</p>
+                                </div>
+                            </div>
+                            
+                            <div class="divider-light"></div>
+                            
+                            <!-- Matched / Missing Split -->
+                            <div class="sw-split">
+                                <div>
+                                    <h4 class="sw-label label-green">Matched Keywords</h4>
+                                    <div id="match-keywords-list" class="chips-container"></div>
+                                </div>
+                                <div>
+                                    <h4 class="sw-label label-red">Missing Keywords</h4>
+                                    <div id="missing-keywords-list" class="chips-container"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="divider-light"></div>
+                            
+                            <!-- Tailoring Tips -->
+                            <h4 class="sub-section-title">Resume Tailoring Recommendations</h4>
+                            <div id="match-tips-list" class="tips-detail-list"></div>
+                        </div>
+                        
+                        <!-- Job Match Loading -->
+                        <div id="matcher-loading" class="matcher-loading card" style="display: none;">
+                            <div class="spinner spinner-small"></div>
+                            <p>Analyzing job alignment and generating tailoring recommendations... Please wait.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>
