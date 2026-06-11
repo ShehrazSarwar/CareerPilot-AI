@@ -109,4 +109,4 @@ CareerPilot AI is more than a resume scorer — it is a complete, automated care
 *Data Scientist | IBM Certified Data Analyst | ML Intern @FlyRank.ai | Ex-Intern Data Science @10Pearls | Section Leader Stanford CIP ’25 | AI/ML, Python, Java, SQL & Power BI*  
 
 * **LinkedIn**: [linkedin.com/in/shehraz-sarwar-ghouri-321394247](https://www.linkedin.com/in/shehraz-sarwar-ghouri-321394247/)
-* **Project Repository**: [github.com/your-username/careerpilot-ai](https://github.com/your-username/careerpilot-ai)
+* **Project Repository**: [github.com/your-username/careerpilot-ai](https://github.com/ShehrazSarwar/CareerPilot-AI)
