@@ -23,6 +23,59 @@ CareerPilot AI is a premium, high-fidelity career growth dashboard that analyzes
 
 ---
 
+## 🏗️ System Architecture
+
+```mermaid
+graph TB
+    subgraph DevEnv["Development & Debugging Environment"]
+        IDE["VS Code IDE"] <-->|"Real-time Code & Debug Assistance"| Copilot["GitHub Copilot"]
+        IDE -->|"Deploy Code & Assets"| Workspace["Local Project Files / GitHub"]
+    end
+
+    subgraph ClientTier["Client Tier (Browser)"]
+        UI["Glassmorphism UI (HTML5 / CSS3 / JS)"]
+        MSAL["MSAL.js Auth Engine"]
+    end
+
+    subgraph AppTier["Application Tier (FastAPI Server)"]
+        Server["FastAPI Web Server"]
+        Parser["Resume Parser"]
+        PDFGen["ReportLab PDF Engine"]
+    end
+
+    subgraph ExtIntegrations["External Integrations & AI Models"]
+        subgraph GeminiEngine["Gemini AI Engine (Dual-Model Fallback)"]
+            ModelPrimary["Primary: gemini-2.5-flash"]
+            ModelFallback["Fallback: gemini-3.1-flash-lite"]
+        end
+        MSGraph["Microsoft Graph API (Work IQ)"]
+    end
+
+    %% Workspace Deployment
+    Workspace -->|"Runs on Localhost/Cloud"| Server
+    Workspace -->|"Serves Static Files"| UI
+
+    %% User Interactions
+    UI -->|"1. Upload CV & Select Role"| Server
+    UI -->|"2. Job Matching Request"| Server
+    UI -->|"4. Request PDF Download"| Server
+    
+    %% Backend internal processing
+    Server -->|"Parse PDF/DOCX"| Parser
+    Server -->|"Request Analysis / Matching"| ModelPrimary
+    ModelPrimary -.->|"On Quota Exceeded/429/Timeout"| ModelFallback
+    Server -->|"Generate in-memory report"| PDFGen
+    
+    %% MS Graph / Work IQ Integration
+    MSAL -->|"3a. OAuth Request"| MSGraph
+    UI -->|"3b. Sync Roadmap to Calendar"| MSGraph
+    
+    %% Outputs
+    PDFGen -->|"Stream PDF Bytes"| UI
+    MSGraph -->|"Create Outlook Events"| Outlook[("Outlook Calendar")]
+```
+---
+
 ## 🏗️ Technology Stack
 
 * **Backend**: FastAPI (Python 3.9+)
