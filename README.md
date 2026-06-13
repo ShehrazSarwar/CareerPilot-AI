@@ -158,7 +158,7 @@ The primary challenge for freshers, students, and professionals switching domain
 ---
 
 ## 💡 Conclusion
-CareerPilot AI is more than a resume scorer — it is a complete, automated career transformation loop. By analyzing CVs, detecting missing competencies, recommending targeted resources, and **directly scheduling actions into the developer's calendar**, it turns passive advice into active, structured daily habits. It bridges the gap between where a candidate is and where they want to be.
+CareerPilot AI is more than a resume scorer, it is a complete, automated career transformation loop. By analyzing CVs, detecting missing competencies, recommending targeted resources, and **directly scheduling actions into the developer's calendar**, it turns passive advice into active, structured daily habits. It bridges the gap between where a candidate is and where they want to be.
 
 ---
 
