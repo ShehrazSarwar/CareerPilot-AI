@@ -4,7 +4,9 @@
 
 **CareerPilot AI** was developed as a submission for the **Microsoft AI Skills Fest 2026 – Agents League Hackathon (Track 1: Creative App)**.
 ### 🔗 Live Demo
-https://shehrazsarwar-careerpilotai.hf.space/
+Web App: https://shehrazsarwar-careerpilotai.hf.space/
+
+DEMO Video: https://www.youtube.com/watch?v=wYNh-An06L4
 
 CareerPilot AI is a premium, high-fidelity career growth dashboard that analyzes your resume, evaluates competency alignments for target roles, provides tailored up-skilling roadmaps, recommends certifications & projects, and **schedules learning items directly into your Microsoft Outlook Calendar**.
 
